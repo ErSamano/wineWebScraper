@@ -1,81 +1,121 @@
 import pandas as pd
+import time
 from bs4 import BeautifulSoup
-import requests
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
-import time
+from datetime import date
 
-'''
-When the content page is dynamic, we need to anable a way to load
-the hiden html site content. In order to achieve that we are going 
-to use Selenium Lib
-to load dynamic elements.
-'''
-s=Service(ChromeDriverManager().install())
-driver = webdriver.Chrome(service=s)
-url = "https://www.bodegasalianza.com/ofertas"
-driver.get(url)
 
-#page = driver.execute_script('return document.body.innerHTML')
+#url = "https://www.bodegasalianza.com/ofertas"
 
-# Setting up a waiting time before scroll down
-SCROLL_PAUSE_TIME = 0.5
+def get_data(product_type, product_url):
 
-# Get scroll height
-last_height = driver.execute_script("return document.body.scrollHeight")
+    s = Service(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=s)
 
-while True:
-    # Scroll down to bottom
-    time.sleep(SCROLL_PAUSE_TIME)
-    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    driver.get(product_url)
 
-    # Wait to load page
-    time.sleep(SCROLL_PAUSE_TIME)
+    products_names = []
+    products_link = []
+    products_price = []
+    products_date = []
+    products_type =[]
+    '''
+        When the content page is dynamic, we need to anable a way to load
+        the hiden html site content. In order to achieve that we are going 
+        to use Selenium Lib
+        to load dynamic elements.
+        '''
+    # Setting up a waiting time before scroll down
+    SCROLL_PAUSE_TIME = 0.5
 
-    # Calculate new scroll height and compare with last scroll height
-    new_height = driver.execute_script("return document.body.scrollHeight")
+    # Get scroll height
+    last_height = driver.execute_script("return document.body.scrollHeight")
 
-    if new_height == last_height:
-        break
-    last_height = new_height
+    while True:
+        # Scroll down to bottom
+        time.sleep(SCROLL_PAUSE_TIME)
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
-res = driver.execute_script("return document.documentElement.outerHTML")
-driver.quit()
-soup = BeautifulSoup(res, 'lxml')
+        # Wait to load page
+        time.sleep(SCROLL_PAUSE_TIME)
 
-products_names = []
-products_link = []
-products_price = []
+        # Calculate new scroll height and compare with last scroll height
+        new_height = driver.execute_script("return document.body.scrollHeight")
 
-# Get all the products name
-for contentName in soup.findAll(attrs={'class':'product-item__name'}):
-    # Get the Product Name
-    name_desc = contentName.find('a')
-    products_names.append(name_desc.text)
+        if new_height == last_height:
+            break
+        last_height = new_height
 
-# Get all the products link
-for contentLink in soup.findAll(attrs={'class':'product-item__name'}):
-    # Get the Product Link
-    for links in contentLink.find_all('a'):
-        product_link = links.get('href')
-        products_link.append(product_link)
+    res = driver.execute_script("return document.documentElement.outerHTML")
+    driver.quit()
+    soup = BeautifulSoup(res, 'lxml')
 
-# Get all the products price
-for contentPrice in soup.findAll(attrs={'class':'product-item__price'}):
-    # Get the Product Name
-    # Check if product is still available
-    if contentPrice.find(class_="price-promo"):
-        product_price = contentPrice.find(class_="price-promo")
-        products_price.append(product_price.text)
+    # Get all the products name
+    for contentName in soup.findAll(attrs={'class':'product-item__name'}):
+        # Get the Product Name
+        products_names.append(contentName.find('a').text)
+        products_date.append(date.today())
+        products_type.append(product_type)
+
+    # Get all the products link
+    for contentLink in soup.findAll(attrs={'class':'product-item__name'}):
+        # Get the Product Link
+        for links in contentLink.find_all('a'):
+            products_link.append(links.get('href'))
+
+    # Get all the products price
+    for contentPrice in soup.findAll(attrs={'class':'product-item__price'}):
+        # Get the Product Name
+        # Check if product is still available
+        if contentPrice.find(class_="price-new"):
+            products_price.append(contentPrice.find(class_="price-new").text)
+        else:
+            products_price.append("AGOTADO")
+
+    product_table = pd.DataFrame({'Tipo':products_type, 'Nombre': products_names,'Links': products_link, 'Precios': products_price, 'Fecha':products_date })
+    return product_table
+
+products = {
+    'Tequila':'https://www.bodegasalianza.com/tequila?PS;12&OrderByReleaseDateDESC',
+    'Mezcal':'https://www.bodegasalianza.com/mezcal?PS;12&OrderByReleaseDateDESC',
+    'Vinos':'https://www.bodegasalianza.com/vinos/todos-los-vinos',
+    'Brandy':'https://www.bodegasalianza.com/brandy?PS;12&OrderByReleaseDateDESC',
+    'Champagne':'https://www.bodegasalianza.com/champagne?PS;12&OrderByReleaseDateDESC',
+    'Cognag':'https://www.bodegasalianza.com/cognac?PS;12&OrderByReleaseDateDESC',
+    'CremasYLicores':'https://www.bodegasalianza.com/cremas-y-licores?PS;12&OrderByReleaseDateDESC',
+    'Ginebra': 'https://www.bodegasalianza.com/ginebra?PS;12&OrderByReleaseDateDESC',
+    'Jerez': 'https://www.bodegasalianza.com/jerez?PS;12&OrderByReleaseDateDESC',
+    'Ron': 'https://www.bodegasalianza.com/ron?PS;12&OrderByReleaseDateDESC',
+    'Vodka': 'https://www.bodegasalianza.com/vodka?PS;12&OrderByReleaseDateDESC',
+    'Whiskey': 'https://www.bodegasalianza.com/whisky?PS;12&OrderByReleaseDateDESC'
+            }
+
+count = 0
+for type, url in products.items():
+    if count == 0:
+        get_data(type, url).to_csv('lista.csv')
     else:
-        products_price.append("AGOTADO")
+        get_data(type, url).to_csv('lista.csv', mode='a', index=False, header=False)
+    count += 1
 
-table = {'Nombre': products_names,
-         'Links': products_link,
-         'Precios': products_price
-        }
-full_table = pd.DataFrame(table)
-full_table.to_csv('lista.csv')
-# print("Full table:\n")
-# print(full_table)
+# url_tequila = "https://www.bodegasalianza.com/tequila?PS;12&OrderByReleaseDateDESC"
+# url_mezcal = "https://www.bodegasalianza.com/mezcal?PS;12&OrderByReleaseDateDESC"
+# url_vinos = "https://www.bodegasalianza.com/vinos/todos-los-vinos"
+# url_brandy="https://www.bodegasalianza.com/brandy?PS;12&OrderByReleaseDateDESC"
+# url_champagne = "https://www.bodegasalianza.com/champagne?PS;12&OrderByReleaseDateDESC"
+# url_cognag = "https://www.bodegasalianza.com/cognac?PS;12&OrderByReleaseDateDESC"
+# url_cremas = "https://www.bodegasalianza.com/cremas-y-licores?PS;12&OrderByReleaseDateDESC"
+# url_ginebra = "https://www.bodegasalianza.com/ginebra?PS;12&OrderByReleaseDateDESC"
+# url_jerez = "https://www.bodegasalianza.com/jerez?PS;12&OrderByReleaseDateDESC"
+# url_ron = "https://www.bodegasalianza.com/ron?PS;12&OrderByReleaseDateDESC"
+# url_vodka = "https://www.bodegasalianza.com/vodka?PS;12&OrderByReleaseDateDESC"
+# url_whiskey = "https://www.bodegasalianza.com/whisky?PS;12&OrderByReleaseDateDESC"
+
+# get_data('Tequila', url_tequila).to_csv('lista.csv')
+# get_data('Mezcal', url_mezcal).to_csv('lista.csv', mode='a', index=False, header=False)
+
+
+
+#print(full_table)
