@@ -89,7 +89,8 @@ products = {
     'Jerez': 'https://www.bodegasalianza.com/jerez?PS;12&OrderByReleaseDateDESC',
     'Ron': 'https://www.bodegasalianza.com/ron?PS;12&OrderByReleaseDateDESC',
     'Vodka': 'https://www.bodegasalianza.com/vodka?PS;12&OrderByReleaseDateDESC',
-    'Whiskey': 'https://www.bodegasalianza.com/whisky?PS;12&OrderByReleaseDateDESC'
+    'Whiskey': 'https://www.bodegasalianza.com/whisky?PS;12&OrderByReleaseDateDESC',
+    'Ofertas':'https://www.bodegasalianza.com/ofertas'
             }
 
 count = 0
