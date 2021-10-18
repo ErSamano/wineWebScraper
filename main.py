@@ -6,9 +6,6 @@ from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from datetime import date
 
-
-#url = "https://www.bodegasalianza.com/ofertas"
-
 def get_data(product_type, product_url):
 
     s = Service(ChromeDriverManager().install())
@@ -53,20 +50,20 @@ def get_data(product_type, product_url):
     soup = BeautifulSoup(res, 'lxml')
 
     # Get all the products name
-    for contentName in soup.findAll(attrs={'class':'product-item__name'}):
+    for contentName in soup.findAll(attrs={'class': 'product-item__name'}):
         # Get the Product Name
         products_names.append(contentName.find('a').text)
         products_date.append(date.today())
         products_type.append(product_type)
 
     # Get all the products link
-    for contentLink in soup.findAll(attrs={'class':'product-item__name'}):
+    for contentLink in soup.findAll(attrs={'class': 'product-item__name'}):
         # Get the Product Link
         for links in contentLink.find_all('a'):
             products_link.append(links.get('href'))
 
     # Get all the products price
-    for contentPrice in soup.findAll(attrs={'class':'product-item__price'}):
+    for contentPrice in soup.findAll(attrs={'class': 'product-item__price'}):
         # Get the Product Name
         # Check if product is still available
         if contentPrice.find(class_="price-new"):
@@ -75,48 +72,29 @@ def get_data(product_type, product_url):
             products_price.append("AGOTADO")
 
     product_table = pd.DataFrame({'Tipo':products_type, 'Nombre': products_names,'Links': products_link, 'Precios': products_price, 'Fecha':products_date })
+
     return product_table
 
 products = {
-    'Tequila':'https://www.bodegasalianza.com/tequila?PS;12&OrderByReleaseDateDESC',
-    'Mezcal':'https://www.bodegasalianza.com/mezcal?PS;12&OrderByReleaseDateDESC',
-    'Vinos':'https://www.bodegasalianza.com/vinos/todos-los-vinos',
-    'Brandy':'https://www.bodegasalianza.com/brandy?PS;12&OrderByReleaseDateDESC',
-    'Champagne':'https://www.bodegasalianza.com/champagne?PS;12&OrderByReleaseDateDESC',
-    'Cognag':'https://www.bodegasalianza.com/cognac?PS;12&OrderByReleaseDateDESC',
-    'CremasYLicores':'https://www.bodegasalianza.com/cremas-y-licores?PS;12&OrderByReleaseDateDESC',
+    'Tequila': 'https://www.bodegasalianza.com/tequila?PS;12&OrderByReleaseDateDESC',
+    'Mezcal': 'https://www.bodegasalianza.com/mezcal?PS;12&OrderByReleaseDateDESC',
+    'Vinos': 'https://www.bodegasalianza.com/vinos/todos-los-vinos',
+    'Brandy': 'https://www.bodegasalianza.com/brandy?PS;12&OrderByReleaseDateDESC',
+    'Champagne': 'https://www.bodegasalianza.com/champagne?PS;12&OrderByReleaseDateDESC',
+    'Cognag': 'https://www.bodegasalianza.com/cognac?PS;12&OrderByReleaseDateDESC',
+    'CremasYLicores': 'https://www.bodegasalianza.com/cremas-y-licores?PS;12&OrderByReleaseDateDESC',
     'Ginebra': 'https://www.bodegasalianza.com/ginebra?PS;12&OrderByReleaseDateDESC',
     'Jerez': 'https://www.bodegasalianza.com/jerez?PS;12&OrderByReleaseDateDESC',
     'Ron': 'https://www.bodegasalianza.com/ron?PS;12&OrderByReleaseDateDESC',
     'Vodka': 'https://www.bodegasalianza.com/vodka?PS;12&OrderByReleaseDateDESC',
     'Whiskey': 'https://www.bodegasalianza.com/whisky?PS;12&OrderByReleaseDateDESC',
-    'Ofertas':'https://www.bodegasalianza.com/ofertas'
+    'Ofertas': 'https://www.bodegasalianza.com/ofertas'
             }
 
 count = 0
 for type, url in products.items():
     if count == 0:
-        get_data(type, url).to_csv('lista.csv')
+        get_data(type, url).to_csv('lista.csv', index=False)
     else:
         get_data(type, url).to_csv('lista.csv', mode='a', index=False, header=False)
     count += 1
-
-# url_tequila = "https://www.bodegasalianza.com/tequila?PS;12&OrderByReleaseDateDESC"
-# url_mezcal = "https://www.bodegasalianza.com/mezcal?PS;12&OrderByReleaseDateDESC"
-# url_vinos = "https://www.bodegasalianza.com/vinos/todos-los-vinos"
-# url_brandy="https://www.bodegasalianza.com/brandy?PS;12&OrderByReleaseDateDESC"
-# url_champagne = "https://www.bodegasalianza.com/champagne?PS;12&OrderByReleaseDateDESC"
-# url_cognag = "https://www.bodegasalianza.com/cognac?PS;12&OrderByReleaseDateDESC"
-# url_cremas = "https://www.bodegasalianza.com/cremas-y-licores?PS;12&OrderByReleaseDateDESC"
-# url_ginebra = "https://www.bodegasalianza.com/ginebra?PS;12&OrderByReleaseDateDESC"
-# url_jerez = "https://www.bodegasalianza.com/jerez?PS;12&OrderByReleaseDateDESC"
-# url_ron = "https://www.bodegasalianza.com/ron?PS;12&OrderByReleaseDateDESC"
-# url_vodka = "https://www.bodegasalianza.com/vodka?PS;12&OrderByReleaseDateDESC"
-# url_whiskey = "https://www.bodegasalianza.com/whisky?PS;12&OrderByReleaseDateDESC"
-
-# get_data('Tequila', url_tequila).to_csv('lista.csv')
-# get_data('Mezcal', url_mezcal).to_csv('lista.csv', mode='a', index=False, header=False)
-
-
-
-#print(full_table)
